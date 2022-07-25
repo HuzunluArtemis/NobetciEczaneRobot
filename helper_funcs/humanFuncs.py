@@ -36,7 +36,9 @@ def getPhoneNumber(num:str, withnewline=False):
     except:
         isdigit = False
     num = str(num)
-    if num.startswith('+90') or isdigit:
+    if num.startswith('90') and isdigit:
+        toret = f"Tıkla Ara: +{num}"
+    elif num.startswith('+90') or isdigit:
         toret = f"Tıkla Ara: {num}"
     else:
         bitisik = "".join(findall(r'\d+', num))
