@@ -11,6 +11,6 @@ def ping(_, message:Message):
     if not AuthUserCheck(message): return
     if ForceSub(message) == 400: return
     start_time = int(round(time.time() * 1000))
-    reply = message.reply_text("Ping")
+    reply = message.reply_text("Ping", quote=True)
     end_time = int(round(time.time() * 1000))
     reply.edit_text(f"Pong\n{end_time - start_time} ms")

@@ -1,20 +1,15 @@
 # https://huzunluartemis.github.io/NobetciEczaneRobot/
 
-import urllib.parse
+import urllib.parse, bs4, requests, json, http.client
 from bs4 import BeautifulSoup
-import bs4
-import requests
 from config import LOGGER, Config
 from helper_funcs.eczaneFuncs import getUblockPath, karakter_cevir, removespace
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
-import http.client
-import json
+from helper_funcs.humanFuncs import getPhoneNumber
 
 def eczaneCollectApi(il, ilce): # ok
-    il = karakter_cevir(il)
-    ilce = karakter_cevir(ilce)
     main_api="https://api.collectapi.com/health/dutyPharmacy?"
     url = main_api + urllib.parse.urlencode({"ilce": ilce, "il": il})
     headers = {
@@ -29,8 +24,8 @@ def eczaneCollectApi(il, ilce): # ok
             if her['name']: stro += her['name']
             #if her['dist']: stro += f"\nİlçe: {str(her['dist'])}"
             if her['address']: stro += f"\n{her['address']}"
-            if her['phone']: stro += f"\n{her['phone']}"
             if her['loc']: stro += f"\nhttps://maps.google.com/maps?q={str(her['loc'])}" # &hl=es&z=14
+            if her['phone']: stro += getPhoneNumber(her['phone'], withnewline=True)
             ret.append(stro)
         return "\n\n".join(ret)
     else:
@@ -59,12 +54,12 @@ def eczaneNosyApi(il, ilce): # ok
             #if her['dist']: stro += f"\nİlçe: {str(her['dist'])}"
             if her['Adresi']: stro += f"\n{her['Adresi']}"
             if her['YolTarifi']: stro += f"\n{her['YolTarifi']}"
-            if her['Telefon']: stro += f"\n{her['Telefon']}"
-            if her['Telefon2']: stro += f"\n{her['Telefon2']}"
             if her['latitude'] and her['longitude']:
                 lat = her['latitude']
                 lng = her['longitude']
                 stro += f"\nhttps://www.google.com/maps/search/?api=1&query={lat},{lng}"
+            if her['Telefon']: stro += getPhoneNumber(her['Telefon'], withnewline=True)
+            if her['Telefon2']: stro += getPhoneNumber(her['Telefon2'], withnewline=True)
             ret.append(stro)
         return "\n\n".join(ret)
     else:
@@ -109,20 +104,21 @@ def eczaneEczaneleriOrg(il, ilce):
         if not response.status_code == 200:
             return print("Bağlantı Hatası")
         fortel = BeautifulSoup(response.content, "html.parser")
-        # adres falan
-        telefon = fortel.find("div", attrs={"class": "pull-left"})
-        if telefon:
-            telefon = fortel.find("div", attrs={"class": "pull-left"}).contents[0].strip()
-            telefon = telefon.replace("Telefon : ", "Telefon: ") # yazım hatasını düzelt
-        else: telefon = None
-        #
-        if removespace(telefon): her += removespace(telefon)
+        # adres
         konum = fortel.find("button", attrs={"class": "btn btn-block btn-success btn-sm"})
         if konum:
             lat = konum['lat']
             lng = konum['lng']
             gmapsurl = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
             her += removespace(gmapsurl, withnewline=False)
+        # telefon
+        telefon = fortel.find("div", attrs={"class": "pull-left"})
+        if telefon:
+            telefon = fortel.find("div", attrs={"class": "pull-left"}).contents[0].strip()
+            telefon = telefon.replace("Telefon : ", "") # yazım hatasını düzelt
+        else: telefon = None
+        #
+        if removespace(telefon): her += getPhoneNumber(telefon, withnewline=True)
         tumu.append(her)
     return "\n\n".join(tumu)
 
@@ -140,14 +136,14 @@ def eczaneEczanelerGenTr(il, ilce):
         bu = ""
         ad = bak.find('span', class_='isim').text if bak.find('span', class_='isim') else None
         mah = (None if bak.find('div', class_='my-2') is None else bak.find('div', class_='my-2').text)
-        adres = bak.find('div', class_='col-lg-6').text if bak.find('div', class_='col-lg-6') else None
+        adres = bak.find('div', class_='col-lg-6').contents[0].text if bak.find('div', class_='col-lg-6') else None
         tarif = (None if bak.find('span', class_='text-secondary font-italic') is None else bak.find('span', class_='text-secondary font-italic').text)
         telf = bak.find('div', class_='col-lg-3 py-lg-2').text if bak.find('div', class_='col-lg-3 py-lg-2') else None
         if ad: bu += removespace(ad)
         if mah: bu += removespace(mah)
         if adres: bu += removespace(adres)
         if tarif: bu += removespace(tarif)
-        if telf: bu += removespace(telf, withnewline=False)
+        if telf: bu += getPhoneNumber(telf)
         tumu.append(bu)
     return "\n\n".join(tumu)
 
@@ -168,10 +164,10 @@ def eczaneHastanemyanimdaCom(il, ilce):
         gharita = bak.find('a', class_='apt-btn')['href']
         ydeskharita = bak.find('a', class_='view-pro-btn')['href']
         if ad: bu += removespace(ad)
-        if telf: bu += removespace(telf)
         if adres: bu += removespace(adres)
         if gharita: bu += removespace(gharita)
-        if ydeskharita: bu += removespace(ydeskharita, withnewline=False)
+        if ydeskharita: bu += removespace(ydeskharita)
+        if telf: bu += getPhoneNumber(telf)
         tumu.append(bu)
     return "\n\n".join(tumu)
 
@@ -187,12 +183,12 @@ def eczaneEczaneleriNet(il, ilce):
     for bak in bugun:
         bu = ""
         ad = bak.find('h3', class_='h3').find('span').text if bak.find('h3', class_='h3').find('span') else None
+        adres = bak.find('address', class_='d-inline m-0').text if bak.find('address', class_='d-inline m-0') else None
         telf = bak.find('i', class_='fas fa-phone')
         if telf: telf = telf.parent.contents[3].text if telf.parent.contents[3] else None
-        adres = bak.find('address', class_='d-inline m-0').text if bak.find('address', class_='d-inline m-0') else None
         if ad: bu += removespace(ad)
-        if telf: bu += removespace(telf)
-        if adres: bu += removespace(adres,withnewline=False)
+        if adres: bu += removespace(adres)
+        if telf: bu += getPhoneNumber(telf)
         tumu.append(bu)
     return "\n\n".join(tumu)
 
@@ -217,9 +213,9 @@ def eczaneTrNobetcieczaneCom(il, ilce):
         corba2 = BeautifulSoup(istek2.content, "lxml")
         harita = corba2.find("a", attrs={"class": "gbutton"})['href']
         if ad: bu += removespace(ad)
-        if telf: bu += removespace(telf)
         if adres: bu += removespace(adres)
-        if harita: bu += removespace(harita,withnewline=False)
+        if harita: bu += removespace(harita)
+        if telf: bu += getPhoneNumber(telf)
         tumu.append(bu)
     return "\n\n".join(tumu)
 
@@ -251,8 +247,8 @@ def eczaneEczaIo(il, ilce):
             adres = adres.find("span", attrs={"class": "pharmacy-card-item__text"}).text
             
             if ad: bu += removespace(ad)
-            if telf: bu += removespace(telf)
-            if adres: bu += removespace(adres, withnewline=False)
+            if adres: bu += removespace(adres)
+            if telf: bu += getPhoneNumber(telf)
             tumu.append(bu)
         return "\n\n".join(tumu)
     except Exception as e:

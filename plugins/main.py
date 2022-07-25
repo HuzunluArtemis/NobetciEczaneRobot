@@ -90,8 +90,9 @@ Konya Çumra
     if Config.CHANNEL_OR_CONTACT: text += f"\n🔥 {Config.CHANNEL_OR_CONTACT}"
     message.reply_text(text=text,disable_web_page_preview=True)
 
-@Client.on_message(filters.text)
+@Client.on_message(filters.text, group=1)
 def handler(_, message: Message):
+    if message.text.startswith('/'): return
     if not AuthUserCheck(message): return
     if ForceSub(message) == 400: return
     # add to quee

@@ -33,6 +33,7 @@ class Config:
         LOGGER.error("API_KEY girin. Bot kapanıyor çünkü küstü.")
         exit(1)
     #customisations
+    LOGGER.info(f"Using API: {USING_API}")
     JOIN_CHANNEL_STR = os.environ.get('JOIN_CHANNEL_STR',
         "Merhaba / Hi {}\n\n" + \
         "🇬🇧 First subscribe my channel from button, try again.\n" + \

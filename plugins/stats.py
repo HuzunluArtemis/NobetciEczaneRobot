@@ -98,7 +98,7 @@ def getHerokuDetails(h_api_key, h_app_name):
 def stats(_, message: Message):
     if not AuthUserCheck(message): return
     if ForceSub(message) == 400: return
-    duz = message.reply_text("...")
+    duz = message.reply_text("...", quote=True)
     currentTime = TimeFormatter((time() - botStartTime)*1000)
     osUptime = TimeFormatter((time() - boot_time())*1000)
     total, used, free, disk= disk_usage('/')
