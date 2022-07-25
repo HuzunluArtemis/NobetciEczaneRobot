@@ -71,11 +71,11 @@ def welcome(_, message: Message):
     if ForceSub(message) == 400: return
     text=f"""Hi / Merhaba {message.from_user.mention}.
 
-🇹🇷 Ben basit bir nöbetçi eczane botuyum.
-Bulunduğunuz bölgedekileri listelemek için Şehir [boşluk] ilçe olarak girin.
+🇹🇷 Ben basit bir nöbetçi eczane botuyum. (Türkiye 🇹🇷 için)
+Bulunduğunuz bölgedekileri listelemek için il [boşluk] ilçe olarak girin.
 Sıra önemli. önce il sonra ilçe yazmalısın.
 
-🇬🇧 I'm a simple on-duty pharmacy bot.
+🇬🇧 I'm a simple on-duty pharmacy bot. (for Turkey 🇹🇷)
 To list duty pharmacies in your area Enter the city   [space] district.
 The order matters. You should write the city first and then the county.
 
