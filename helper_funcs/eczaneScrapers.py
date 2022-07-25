@@ -93,7 +93,7 @@ def eczaneEczaneleriOrg(il, ilce):
         else: infokutu2 = None
         # 
         if removespace(adi): her += removespace(adi)
-        if removespace(col.text): her += removespace(col.text)
+        if removespace(col.find("a").next_sibling.text): her += removespace(col.find("a").next_sibling.text)
         if removespace(infokutu1): her += removespace(infokutu1)
         # if removespace(infokutu2): her += removespace(infokutu2) ilçeyi veriyor gereksiz
         # checking again for tel number
